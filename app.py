@@ -1,23 +1,25 @@
+# Import necessary libraries
+import pandas as pd
+import plotly.graph_objs as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import pandas as pd
-import plotly.graph_objs as go
+from dash.dependencies import Input, Output
 
-# load the dataset
+# Load the dataset
 data = pd.read_csv('Sales.csv')
 
-# extract the year from the 'Order Date' column
+# Extract the year from the 'Order Date' column
 data['Year'] = pd.to_datetime(data['Order Date']).dt.year
 
-# create a Dash application instance
+# Create a Flask application instance
 app = dash.Dash(__name__)
 
-# define the layout of the dashboard
+# Define the layout of the dashboard
 app.layout = html.Div(children=[
     html.H1(children='Sales Dashboard'),
     
-    # dropdown menu to select year
+    # Dropdown menu to select year
     dcc.Dropdown(
         id='year-dropdown',
         options=[{'label': str(year), 'value': year} for year in data['Year'].unique()],
@@ -25,23 +27,23 @@ app.layout = html.Div(children=[
         clearable=False
     ),
     
-    # sales overview chart
+    # Sales overview chart
     dcc.Graph(
         id='sales-by-region-and-category',
         style={'height': '500px'},
     ),
     
-    # product performance chart
+    # Product performance chart
     dcc.Graph(
         id='top-selling-products',
         style={'height': '500px'},
     ),
 ])
 
-# update the sales overview chart based on the selected year
+# Update the sales overview chart based on the selected year
 @app.callback(
-    dash.dependencies.Output('sales-by-region-and-category', 'figure'),
-    dash.dependencies.Input('year-dropdown', 'value')
+    Output('sales-by-region-and-category', 'figure'),
+    Input('year-dropdown', 'value')
 )
 def update_sales_by_region_and_category(year):
     sales_by_region_category = data[data['Year'] == year].groupby(['Region', 'Product Category'])['Sales'].sum().reset_index()
@@ -59,10 +61,10 @@ def update_sales_by_region_and_category(year):
     )
     return fig
 
-# update the top-selling products chart based on the selected year
+# Update the top-selling products chart based on the selected year
 @app.callback(
-    dash.dependencies.Output('top-selling-products', 'figure'),
-    dash.dependencies.Input('year-dropdown', 'value')
+    Output('top-selling-products', 'figure'),
+    Input('year-dropdown', 'value')
 )
 def update_top_selling_products(year):
     top_selling_products = data[data['Year'] == year].groupby('Product Category')['Sales'].agg(['sum', 'count']).reset_index().sort_values(by='sum', ascending=False)[:10]
